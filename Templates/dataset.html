@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Dataset</h1>
+<li>
+    <ul>data = {{data}}</ul>
+    <ul>mean = {{mean}}</ul>
+    <ul>median = {{median}}</ul>
+    <ul>mode = {{mode}}</ul>
+    <ul>variance = {{variance}}</ul>
+    <ul>standard deviation = {{standard_deviation}}</ul>
+</li>
+<img src='{{graph}}' alt='bar chart' />
+{% endblock %}

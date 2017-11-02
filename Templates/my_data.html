@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>My data sets</h1>
+<li>
+    {% for set in {{data_sets}} %}
+    <ul>{{set}}</ul>
+    {% endfor %}
+</li>
+{% endblock %}
