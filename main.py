@@ -4,21 +4,23 @@ import hashlib
 import statistics
 import matplotlib.pyplot as plt
 
-import controller
-import model
+from models import (bar_chart, check_signup, check_user, data_number_check, enter_data, get_data, get_mean, get_median, get_mode, get_set,
+get_standard_deviation, get_variance, logout_user, separate_data, create_user)
 
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['DEBUG'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://stats:stats@localhost:8889/stats'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://stats:password@localhost:8889/stats'
 db = SQLAlchemy(app)
+
 app.secret_key = 'y337kGcys&zP3B'
 
 class Data(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    data = db.Column(db.String)
+    data = db.Column(db.String(120))
 
     def __init__(self, data):
         self.data = data
@@ -40,19 +42,71 @@ def require_login():
         return redirect('/login')
 
 @app.route('/', methods=['GET'])
-controller.index()
+def index():
+    return render_template('index.html')
 
 @app.route('/login', methods=['GET','POST'])
-login()
+def login():
+    if request.method == 'POST':
+        # check_user either returns true or a dict with an error message.
+        user = check_user(request.args.get('username'),request.args.get('password'))
+        if user:
+            session['username'] = request.args.get('username')
+            return redirect('/data')
+        else:
+            return render_template('/login', user=user)
+    else:
+        user = {'password_error': '', 'username_error':''}
+        return render_template('login.html', user=user)
 
-@app.route('/signup', methods=['GET'])
-signup()
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        #check_signup either returns true or a dict with an error message.
+        user = check_signup(request.form.get('username'), request.form.get('password'), request.form.get('verify'))
+        if user:
+            create_user(request.form.get('username'), request.form.get('password'))
+            session['username'] = request.form.get('username')
+            return redirect('/newdata')
+        else:
+            return render_template('signup.html', user=user)
+    else:
+        user = {'password_error':'', 'user_error':''}
+        return render_template('signup.html', user=user)
 
 @app.route('/data', methods=['GET', 'POST'])
-data()
+def data():
+    if request.method == 'POST':
+        check_number = data_number_check(request.form.get('data'))
+        if check_number:
+            enter_data(request.form.get('data'))
+            return redirect('/my_data')
+        else:
+            return render_template('data.html', error='Please follow the format for entering data.')
+    return render_template('data.html')
 
 @app.route('/my_data', methods=['GET', 'POST'])
-my_data()
+def my_data():
+    if request.args.get('entry_id'):
+        data_set = get_set(request.args.get('entry_id'))
+        # the data set is in csv format and needs to be broken up into a list to use.
+        data = separate_data(data_set)
+        mean = get_mean(data)
+        median = get_median(data)
+        mode = get_mode(data)
+        variance = get_variance(data)
+        standard_deviation = get_standard_deviation(data)
+        graph = bar_chart(data)
+        return render_template('dataset.html', data=data, mean=mean, median=median, mode=mode, variance=variance,
+         standard_deviation=standard_deviation, graph=graph)
+    else:
+        data_sets = get_data(session['username'])
+        return render_template('my_data.html', data_sets=data_sets)
 
 @app.route('/logout', methods=['GET'])
-logout()
+def logout():
+    logout_user(request.session.get(username))
+    return redirect('/login')
+
+if __name__ == '__main__':
+    app.run()

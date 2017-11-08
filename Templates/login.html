@@ -1,4 +1,4 @@
-{% extends "base.html"}
+{% extends "base.html" %}
 
 {% block content %}
 <h1>Log in to stats</h1>
@@ -11,7 +11,7 @@
             </td>
             <td>
                 <input name="username" type="text" value="{{username}}">
-                <p>{{user[username_error]}}</p>
+                <p>{{user['username_error']}}</p>
             </td>
         </tr>
         <tr>
@@ -20,7 +20,7 @@
             </td>
             <td>
                 <input name="password" type="password">
-                <p>{{user[password_error]}}</p>
+                <p>{{user['password_error']}}</p>
             </td>
         </tr>
     </table>
